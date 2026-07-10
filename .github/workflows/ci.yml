@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-image:
-    runs-on: [self-hosted, laptop-runner]
+    runs-on: [self-hosted, Linux]
 
     steps:
       - name: Checkout kode
