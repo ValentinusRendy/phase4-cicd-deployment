@@ -5,9 +5,10 @@ USER root
 RUN apt-get update && \
     apt-get install -y \
     maven \
-    nodejs \
-    npm \
     git \
     curl
 
-USER runner
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs
+
+RUN node -v && npm -v && mvn -version
