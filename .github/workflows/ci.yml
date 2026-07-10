@@ -6,19 +6,12 @@ on:
       - main
 
 jobs:
-  build-image:
+  deploy:
     runs-on: [self-hosted, Linux]
 
     steps:
-      - name: Checkout kode
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Deploy aplikasi
         run: |
-          docker build -t my-app:${{ github.sha }} .
-          docker tag my-app:${{ github.sha }} my-app:latest
-
-      - name: Deploy dengan Docker Compose
-        run: |
-          docker compose down
-          docker compose up -d 
+          docker compose up -d --build
