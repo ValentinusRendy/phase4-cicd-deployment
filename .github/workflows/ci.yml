@@ -10,35 +10,34 @@ jobs:
   backend-test:
     runs-on: [self-hosted, Linux]
 
-    defaults:
-      run:
-        working-directory: "./aegira-loan-service (Backend)"
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test Backend
+      - name: Backend Unit Test
         run: |
-          mvn clean test
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w "/workspace/aegira-loan-service (Backend)" \
+            maven:3.9.9-eclipse-temurin-21 \
+            mvn clean test
 
   frontend-test:
     runs-on: [self-hosted, Linux]
     needs: backend-test
 
-    defaults:
-      run:
-        working-directory: "./creditappdemo (Frontend)"
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Frontend Test
         run: |
-          npm ci
-
-      - name: Run Frontend Tests
-        run: |
-          npx playwright test
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w "/workspace/creditappdemo (Frontend)" \
+            mcr.microsoft.com/playwright:v1.54.2-noble \
+            bash -c "
+              npm ci &&
+              npx playwright test
+            "
 
   deploy:
     runs-on: [self-hosted, Linux]
@@ -52,4 +51,3 @@ jobs:
       - name: Deploy aplikasi
         run: |
           docker compose up -d --build
-          
