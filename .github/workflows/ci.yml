@@ -17,9 +17,11 @@ jobs:
         run: |
           docker run --rm \
             -v "$PWD:/workspace" \
-            -w "/workspace/aegira-loan-service (Backend)" \
             maven:3.9.9-eclipse-temurin-21 \
-            mvn clean test
+            bash -c "
+              cd '/workspace/aegira-loan-service (Backend)'
+              mvn clean test
+            "
 
   frontend-test:
     runs-on: [self-hosted, Linux]
@@ -32,10 +34,10 @@ jobs:
         run: |
           docker run --rm \
             -v "$PWD:/workspace" \
-            -w "/workspace/creditappdemo (Frontend)" \
             mcr.microsoft.com/playwright:v1.54.2-noble \
             bash -c "
-              npm ci &&
+              cd '/workspace/creditappdemo (Frontend)'
+              npm ci
               npx playwright test
             "
 
