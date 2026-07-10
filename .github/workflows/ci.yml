@@ -17,3 +17,8 @@ jobs:
         run: |
           docker build -t my-app:${{ github.sha }} .
           docker tag my-app:${{ github.sha }} my-app:latest
+
+      - name: Deploy dengan Docker Compose
+        run: |
+          docker compose down
+          docker compose up -d 
