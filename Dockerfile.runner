@@ -1,0 +1,13 @@
+FROM myoung34/github-runner:latest
+
+USER root
+
+RUN apt-get update && \
+    apt-get install -y \
+    maven \
+    nodejs \
+    npm \
+    git \
+    curl
+
+USER runner

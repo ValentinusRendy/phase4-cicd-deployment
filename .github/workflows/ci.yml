@@ -10,45 +10,52 @@ jobs:
   backend-test:
     runs-on: [self-hosted, Linux]
 
+    defaults:
+      run:
+        working-directory: "./aegira-loan-service (Backend)"
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Debug Runner
+      - name: Cek Java
         run: |
-          pwd
-          ls -la
-          find . -name pom.xml
+          java -version
 
-      - name: Debug Docker
+      - name: Cek Maven
         run: |
-          docker run --rm \
-            -v "$PWD:/workspace" \
-            maven:3.9.9-eclipse-temurin-21 \
-            bash -c "
-              echo 'WORKSPACE CONTENT:'
-              ls -la /workspace
-              echo ''
-              echo 'POM FILES:'
-              find /workspace -name pom.xml
-            "
+          mvn -version
+
+      - name: Backend Unit Test
+        run: |
+          mvn clean test
 
   frontend-test:
     runs-on: [self-hosted, Linux]
     needs: backend-test
 
+    defaults:
+      run:
+        working-directory: "./creditappdemo (Frontend)"
+
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cek Node
+        run: |
+          node -v
+          npm -v
+
+      - name: Install Dependencies
+        run: |
+          npm ci
+
+      - name: Install Playwright Browser
+        run: |
+          npx playwright install
+
       - name: Frontend Test
         run: |
-          docker run --rm \
-            -v "$PWD:/workspace" \
-            mcr.microsoft.com/playwright:v1.54.2-noble \
-            bash -c "
-              cd '/workspace/creditappdemo (Frontend)'
-              npm ci
-              npx playwright test
-            "
+          npx playwright test
 
   deploy:
     runs-on: [self-hosted, Linux]
