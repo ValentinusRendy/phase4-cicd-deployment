@@ -71,19 +71,6 @@ services:
       VITE_API_URL: http://localhost:8080
     networks:
       - aegira-network
-  
-  runner:
-      image: myoung34/github-runner:latest
-      container_name: github-runner-phase4
-      environment:
-          REPO_URL: https://github.com/ValentinusRendy/phase4-cicd-deployment
-          RUNNER_NAME: laptop-runner
-          RUNNER_TOKEN: BMEV3IN6Q7FTVYS5CZUJZQTKKELEE  # ganti dengan token
-          LABELS: docker-local
-      volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
-          - ./runner-data:/runner/data
-      restart: unless-stopped
 
 volumes:
   postgres_data:
