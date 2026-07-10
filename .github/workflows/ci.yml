@@ -52,3 +52,4 @@ jobs:
       - name: Deploy aplikasi
         run: |
           docker compose up -d --build
+          
