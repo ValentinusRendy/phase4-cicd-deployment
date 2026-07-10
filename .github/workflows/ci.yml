@@ -1,0 +1,19 @@
+name: Pipeline Pertama
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-image:
+    runs-on: [self-hosted, laptop-runner]
+
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t my-app:${{ github.sha }} .
+          docker tag my-app:${{ github.sha }} my-app:latest
