@@ -15,19 +15,17 @@ jobs:
         working-directory: "./aegira-loan-service (Backend)"
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Cek Java
-        run: |
-          java -version
+        run: java -version
 
       - name: Cek Maven
-        run: |
-          mvn -version
+        run: mvn -version
 
       - name: Backend Unit Test
-        run: |
-          mvn clean test
+        run: mvn clean test
 
   frontend-test:
     runs-on: [self-hosted, Linux]
@@ -38,7 +36,8 @@ jobs:
         working-directory: "./creditappdemo (Frontend)"
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Cek Node
         run: |
@@ -46,12 +45,11 @@ jobs:
           npm -v
 
       - name: Install Dependencies
-        run: |
-          npm ci
+        run: npm ci
 
-      - name: Install Playwright Browser
+      - name: Install Playwright Browser dan Dependencies
         run: |
-          npx playwright install
+          npx playwright install --with-deps
 
       - name: Jalankan Frontend Test
         run: |
@@ -65,12 +63,13 @@ jobs:
 
           echo ""
           echo "=== ERROR CONTENT ==="
+
           find . -name "error-context.md" \
             -exec echo "====================" \; \
             -exec echo "FILE: {}" \; \
             -exec cat {} \;
 
-      - name: Upload Playwright Artifact
+      - name: Upload Playwright Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -81,13 +80,19 @@ jobs:
 
   deploy:
     runs-on: [self-hosted, Linux]
+
     needs:
       - backend-test
       - frontend-test
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Deploy aplikasi
+      - name: Deploy Aplikasi
         run: |
           docker compose up -d --build
+
+      - name: Verifikasi Container
+        run: |
+          docker ps
