@@ -7,8 +7,46 @@ on:
 
 jobs:
 
+  build-backend:
+    runs-on: [self-hosted, Linux]
+
+    defaults:
+      run:
+        working-directory: "./aegira-loan-service (Backend)"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Cek Java
+        run: java -version
+
+      - name: Cek Maven
+        run: mvn -version
+
+      - name: Build Backend
+        run: |
+          mvn clean package -DskipTests
+
+  backend-test:
+    runs-on: [self-hosted, Linux]
+    needs: build-backend
+
+    defaults:
+      run:
+        working-directory: "./aegira-loan-service (Backend)"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Backend Unit Test
+        run: |
+          mvn test
+
   build-frontend:
     runs-on: [self-hosted, Linux]
+    needs: backend-test
 
     defaults:
       run:
@@ -72,47 +110,9 @@ jobs:
             creditappdemo (Frontend)/playwright-report
             creditappdemo (Frontend)/test-results
 
-  build-backend:
-    runs-on: [self-hosted, Linux]
-    needs: frontend-test
-
-    defaults:
-      run:
-        working-directory: "./aegira-loan-service (Backend)"
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Build Backend
-        run: |
-          mvn clean package -DskipTests
-
-  backend-test:
-    runs-on: [self-hosted, Linux]
-    needs: build-backend
-
-    defaults:
-      run:
-        working-directory: "./aegira-loan-service (Backend)"
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Cek Java
-        run: java -version
-
-      - name: Cek Maven
-        run: mvn -version
-
-      - name: Backend Unit Test
-        run: |
-          mvn test
-
   push-dockerhub:
     runs-on: [self-hosted, Linux]
-    needs: backend-test
+    needs: frontend-test
 
     steps:
       - name: Checkout Repository
@@ -150,18 +150,14 @@ jobs:
     needs: push-dockerhub
 
     steps:
-      - name: Login Docker Hub
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | \
-          docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
       - name: Pull Latest Images
         run: |
-          docker pull ${{ secrets.DOCKER_USERNAME }}/aegira-loan-service:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/creditappdemo:latest
+          docker pull vrendy/aegira-loan-service:latest
+          docker pull vrendy/creditappdemo:latest
 
       - name: Deploy Application
         run: |
+          docker compose pull
           docker compose down
           docker compose up -d
 
