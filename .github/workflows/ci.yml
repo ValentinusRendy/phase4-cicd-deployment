@@ -1,4 +1,4 @@
-name: Pipeline Phase 4 
+name: Pipeline Phase 4
 
 on:
   push:
@@ -7,8 +7,90 @@ on:
 
 jobs:
 
+  build-frontend:
+    runs-on: [self-hosted, Linux]
+
+    defaults:
+      run:
+        working-directory: "./creditappdemo (Frontend)"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Cek Node
+        run: |
+          node -v
+          npm -v
+
+      - name: Install Dependency
+        run: |
+          npm ci
+
+      - name: Build Frontend
+        run: |
+          npm run build
+
+  frontend-test:
+    runs-on: [self-hosted, Linux]
+    needs: build-frontend
+
+    defaults:
+      run:
+        working-directory: "./creditappdemo (Frontend)"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependency
+        run: |
+          npm ci
+
+      - name: Install Playwright
+        run: |
+          npx playwright install --with-deps
+
+      - name: Run Frontend Test
+        run: |
+          npx playwright test
+
+      - name: Show Error Context
+        if: failure()
+        run: |
+          find . -name "error-context.md" \
+            -exec echo "====================" \; \
+            -exec echo "FILE: {}" \; \
+            -exec cat {} \;
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            creditappdemo (Frontend)/playwright-report
+            creditappdemo (Frontend)/test-results
+
+  build-backend:
+    runs-on: [self-hosted, Linux]
+    needs: frontend-test
+
+    defaults:
+      run:
+        working-directory: "./aegira-loan-service (Backend)"
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Backend
+        run: |
+          mvn clean package -DskipTests
+
   backend-test:
     runs-on: [self-hosted, Linux]
+    needs: build-backend
 
     defaults:
       run:
@@ -25,74 +107,64 @@ jobs:
         run: mvn -version
 
       - name: Backend Unit Test
-        run: mvn clean test
+        run: |
+          mvn test
 
-  frontend-test:
+  push-dockerhub:
     runs-on: [self-hosted, Linux]
     needs: backend-test
 
-    defaults:
-      run:
-        working-directory: "./creditappdemo (Frontend)"
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Cek Node
+      - name: Login Docker Hub
         run: |
-          node -v
-          npm -v
+          echo "${{ secrets.DOCKER_PASSWORD }}" | \
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Install Playwright Browser dan Dependencies
+      - name: Build Backend Image
         run: |
-          npx playwright install --with-deps
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/aegira-loan-service:latest \
+            "./aegira-loan-service (Backend)"
 
-      - name: Jalankan Frontend Test
+      - name: Build Frontend Image
         run: |
-          npx playwright test
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/creditappdemo:latest \
+            "./creditappdemo (Frontend)"
 
-      - name: Tampilkan Error Context
-        if: failure()
+      - name: Push Backend Image
         run: |
-          echo "=== ERROR CONTEXT FILES ==="
-          find . -name "error-context.md"
+          docker push \
+          ${{ secrets.DOCKER_USERNAME }}/aegira-loan-service:latest
 
-          echo ""
-          echo "=== ERROR CONTENT ==="
-
-          find . -name "error-context.md" \
-            -exec echo "====================" \; \
-            -exec echo "FILE: {}" \; \
-            -exec cat {} \;
-
-      - name: Upload Playwright Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: |
-            creditappdemo (Frontend)/playwright-report
-            creditappdemo (Frontend)/test-results
+      - name: Push Frontend Image
+        run: |
+          docker push \
+          ${{ secrets.DOCKER_USERNAME }}/creditappdemo:latest
 
   deploy:
     runs-on: [self-hosted, Linux]
-
-    needs:
-      - backend-test
-      - frontend-test
+    needs: push-dockerhub
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Deploy Aplikasi
+      - name: Login Docker Hub
         run: |
-          docker compose up -d --build
+          echo "${{ secrets.DOCKER_PASSWORD }}" | \
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: Verifikasi Container
+      - name: Pull Latest Images
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/aegira-loan-service:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/creditappdemo:latest
+
+      - name: Deploy Application
+        run: |
+          docker compose down
+          docker compose up -d
+
+      - name: Verify Containers
         run: |
           docker ps

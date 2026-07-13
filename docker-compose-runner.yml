@@ -9,7 +9,7 @@ services:
     environment:
       REPO_URL: https://github.com/ValentinusRendy/phase4-cicd-deployment
       RUNNER_NAME: laptop-runner
-      RUNNER_TOKEN: BMEV3IJYT6KYFNO4J4UX2U3KKJESM
+      RUNNER_TOKEN: BMEV3IOHCRJAG7YLTOUDPG3KKRJWI
       LABELS: docker-local
       RUN_AS_ROOT: "true"
 

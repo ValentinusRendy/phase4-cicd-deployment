@@ -30,9 +30,7 @@ services:
       - aegira-network
 
   backend:
-    build:
-      context: "./aegira-loan-service (Backend)"
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/aegira-loan-service:latest
     container_name: aegira-backend
     depends_on:
       postgres:
@@ -59,16 +57,14 @@ services:
       - aegira-network
 
   frontend:
-    build:
-      context: "./creditappdemo (Frontend)"
-      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/creditappdemo:latest
     container_name: creditappdemo-frontend
     depends_on:
       - backend
     ports:
       - "5173:5173"
     environment:
-      VITE_API_URL: http://localhost:8080
+      VITE_API_URL: http://backend:8080
     networks:
       - aegira-network
 
@@ -79,4 +75,3 @@ volumes:
 networks:
   aegira-network:
     driver: bridge
-    
